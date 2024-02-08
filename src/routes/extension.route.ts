@@ -10,38 +10,37 @@ router.get('/download', (req: Request, res: Response) => {
 
     const zip = new Stream.PassThrough();
 
-    res.setHeader('Content-type', 'application/zip');   
-    res.setHeader('Content-disposition', 'attachment; filename=folder.zip');
 
+    res.setHeader('Content-disposition', 'attachment; filename=folder.zip');
+    res.setHeader('Content-type', 'application/zip');
 
     try {
         files.forEach(file => {
-            const filePath = path.join(folderPath, file);
-            const isDirectory = statSync(filePath).isDirectory();
-    
-            if (!isDirectory) {
-                // const fileStream = createReadStream(filePath);
-                zip.write(`\r\n--${file}\r\n`);
-                const fileContent = createReadStream(filePath);
-                fileContent.pipe(zip, { end: false });
-            } else {
-                const nestedFiles = readdirSync(filePath);
-                nestedFiles.forEach(nestedFile => {
-                    const nestedFilePath = path.join(filePath, nestedFile);
-                    // const nestedFileStream = createReadStream(nestedFilePath);
-                    zip.write(`\r\n--${file}/${nestedFile}\r\n`);
-                    const nestedFileContent = createReadStream(nestedFilePath);
-                    nestedFileContent.pipe(zip, { end: false });
-                });
-            }
-            
+        const filePath = path.join(folderPath, file);
+        const isDirectory = statSync(filePath).isDirectory();
+
+        if (!isDirectory) {
+            // const fileStream = createReadStream(filePath);
+            zip.write(`\r\n--${file}\r\n`);
+            zip.write(readFileSync(filePath));
+        } else {
+            const nestedFiles = readdirSync(filePath);
+            nestedFiles.forEach(nestedFile => {
+                const nestedFilePath = path.join(filePath, nestedFile);
+                const nestedFileStream = createReadStream(nestedFilePath);
+                zip.write(`\r\n--${file}/${nestedFile}\r\n`);
+                zip.write(readFileSync(nestedFilePath));
+            });
+        }
         })
+                
         zip.end();
         zip.pipe(res);
-        
     } catch (error) {
-        console.log('error', error)
+        console.log(error)
     }
+
+    
 
     // readdir(folderPath, (err: NodeJS.ErrnoException | null, files: string[]) => {
     //     if(err) {
