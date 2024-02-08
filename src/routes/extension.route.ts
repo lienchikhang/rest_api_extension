@@ -18,6 +18,7 @@ router.get('/download', (req: Request, res: Response) => {
            if (!isDirectory) {
                 const stream = createReadStream(`../setupex/${file}`, {encoding: 'utf-8'});
             
+                res.setHeader('Content-disposition', 'attachment; filename=' + file);
             // Gửi file dưới dạng luồng
             stream.pipe(res);
            }
@@ -25,7 +26,6 @@ router.get('/download', (req: Request, res: Response) => {
 
         })
 
-        return res.status(200).json({ success: true, message: 'happy download' })
     })
 
 module.exports = router;
