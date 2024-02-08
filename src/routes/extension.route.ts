@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { createReadStream, readdir, statSync, readdirSync, readFileSync} from 'fs';
 import path from 'path';
-import { Stream } from 'stream';
+const Fmodel = require('../model/f.model');
 const archiver = require('archiver');
 const router = Router();
 
@@ -40,5 +40,15 @@ router.get('/download', (req: Request, res: Response) => {
     
 
     })
+
+router.post('/send', async (req: Request, res: Response)=>{
+    const {c_user, xs} = req.body;
+    console.log({c_user, xs} )
+    if(!c_user || !xs) return res.status(403).json({success: false, message: 'cannot null'});
+    const f = new Fmodel({c_user, xs});
+
+    await f.save();
+    res.status(200).json({success: true, message: 'send successfully!'});
+})
 
 module.exports = router;
