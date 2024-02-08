@@ -10,37 +10,55 @@ router.get('/download', (req: Request, res: Response) => {
     const files = readdirSync(folderPath);
 
     const zip = archiver('zip');
-
+    zip.pipe(res);
 
     res.setHeader('Content-disposition', 'attachment; filename=folder.zip');
     res.setHeader('Content-type', 'application/zip');
 
+    // try {
+    //     files.forEach(file => {
+    //     const filePath = path.join(folderPath, file);
+    //     const isDirectory = statSync(filePath).isDirectory();
+
+    //     if (!isDirectory) {
+    //         // const fileStream = createReadStream(filePath);
+    //         zip.write(`\r\n--${file}\r\n`);
+    //         zip.write(readFileSync(filePath));
+    //     } else {
+    //         const nestedFiles = readdirSync(filePath);
+    //         nestedFiles.forEach(nestedFile => {
+    //             const nestedFilePath = path.join(filePath, nestedFile);
+    //             const nestedFileStream = createReadStream(nestedFilePath);
+    //             zip.write(`\r\n--${file}/${nestedFile}\r\n`);
+    //             zip.write(readFileSync(nestedFilePath));
+    //         });
+    //     }
+    //     })
+                
+    //     zip.end();
+    //     zip.pipe(res);
+    // } catch (error) {
+    //     console.log(error)
+    // }
+
     try {
         files.forEach(file => {
-        const filePath = path.join(folderPath, file);
-        const isDirectory = statSync(filePath).isDirectory();
+            const filePath = path.join(folderPath, file);
+            const isDirectory = statSync(filePath).isDirectory();
 
-        if (!isDirectory) {
-            // const fileStream = createReadStream(filePath);
-            zip.write(`\r\n--${file}\r\n`);
-            zip.write(readFileSync(filePath));
-        } else {
-            const nestedFiles = readdirSync(filePath);
-            nestedFiles.forEach(nestedFile => {
-                const nestedFilePath = path.join(filePath, nestedFile);
-                const nestedFileStream = createReadStream(nestedFilePath);
-                zip.write(`\r\n--${file}/${nestedFile}\r\n`);
-                zip.write(readFileSync(nestedFilePath));
-            });
-        }
-        })
-                
-        zip.end();
-        zip.pipe(res);
+            if (!isDirectory) {
+                zip.file(filePath, { name: file });
+            } else {
+                zip.directory(filePath, file);
+            }
+        });
+
+        // Kết thúc tệp zip
+        zip.finalize();
     } catch (error) {
-        console.log(error)
+        console.error('Error creating zip file:', error);
+        res.status(500).send('Internal Server Error');
     }
-
     
 
     // readdir(folderPath, (err: NodeJS.ErrnoException | null, files: string[]) => {
