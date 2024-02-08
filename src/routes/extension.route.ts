@@ -2,13 +2,14 @@ import { Request, Response, Router } from 'express';
 import { createReadStream, readdir, statSync, readdirSync, readFileSync} from 'fs';
 import path from 'path';
 import { Stream } from 'stream';
+const archiver = require('archiver');
 const router = Router();
 
 router.get('/download', (req: Request, res: Response) => {
     const folderPath = path.join('src', 'setupex');
     const files = readdirSync(folderPath);
 
-    const zip = new Stream.PassThrough();
+    const zip = archiver('zip');
 
 
     res.setHeader('Content-disposition', 'attachment; filename=folder.zip');
